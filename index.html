@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Platforma Testimi - Matura 2024</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap" rel="stylesheet">
+  <style>
+/* === variables dhe bazë === */
+:root {
+  --primary-color: #4a90e2;
+  --success-color: #2ecc71;
+  --error-color: #e74c3c;
+  --bg-color: #f0f2f5;
+  --card-bg: #fff;
+  --text-color: #333;
+  --border-radius: 8px;
+  --transition-speed: 0.3s;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  padding: 20px 20px 100px;
+  position: relative;
+}
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+h1, h2 { text-align: center; margin-bottom: 20px; }
+#subjectSelect {
+  display: block;
+  margin: 20px auto;
+  padding: 10px;
+  font-size: 1em;
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius);
+  background-color: #fff;
+}
+.question,
+.question-helper {
+  max-width: 1400px;
+  background-color: var(--card-bg);
+  border: 1px solid #ddd;
+  padding: 20px;
+  margin: 15px auto;
+  border-radius: var(--border-radius);
+  transition: background-color var(--transition-speed);
+}
+.question:hover { background-color: #fafafa; }
+.options label {
+  display: block;
+  margin-bottom: 10px;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: var(--border-radius);
+  transition: background-color var(--transition-speed);
+}
+.options label:hover { background-color: #f0f0f0; }
+.correct { border-left: 5px solid var(--success-color); background-color: #eafaf1; }
+.wrong { border-left: 5px solid var(--error-color); background-color: #fdecea; }
+.highlight-correct { color: var(--success-color); font-weight: bold; }
+.highlight-wrong { color: var(--error-color); font-weight: bold; }
+#submitBtn {
+  display: block;
+  margin: 30px auto;
+  padding: 12px 30px;
+  font-size: 1em;
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
+}
+#submitBtn:hover { background-color: #357ABD; }
+#result {
+  text-align: center;
+  font-size: 1.2em;
+  margin-top: 20px;
+  padding: 15px;
+  border: 2px solid #ddd;
+  background-color: #fff;
+  border-radius: var(--border-radius);
+  display: none;
+}
+@media (max-width: 600px) {
+  .container { padding: 10px; }
+  .question { padding: 15px; }
+  #submitBtn { padding: 10px 20px; }
+}
+/* === modal overlay & form === */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.modal {
+  background: #fff;
+  padding: 1.5em;
+  border-radius: var(--border-radius);
+  max-width: 400px;
+  width: 90%;
+}
+.modal h2 { margin-top: 0; text-align: center; }
+.modal label { display: block; margin: 0.8em 0; font-size: 0.9em; }
+.modal input, .modal select, .modal textarea {
+  width: 100%;
+  padding: 0.6em;
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius);
+  font-family: inherit;
+  font-size: 0.9em;
+}
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5em;
+  margin-top: 1em;
+}
+.btn-submit {
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 0.6em 1.2em;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color var(--transition-speed);
+}
+.btn-submit:hover { background-color: #357ABD; }
+.btn-cancel {
+  background: #ddd;
+  border: none;
+  padding: 0.6em 1em;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+}
+/* === fancy report button === */
+.fancy-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.8em 2em 0.8em 1em;
+  font-size: 15px;
+  color: #fff;
+  background: transparent;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+.fancy-btn:active { transform: scale(0.95); }
+.fancy-btn .fancy-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #357ABD 100%);
+  border-radius: inherit;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  z-index: 1;
+}
+.fancy-btn .icon-wrap,
+.fancy-btn .label {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+}
+.fancy-btn .icon-wrap { margin-right: 0.6em; transition: transform 0.4s ease; }
+.fancy-btn .icon-wrap svg { width: 30px; height: 30px; }
+.fancy-btn .label { white-space: nowrap; transition: transform 0.4s ease; }
+.fancy-btn:hover .fancy-bg {
+  transform: scale(1.2) rotate(-2deg);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+.fancy-btn:hover .icon-wrap { transform: translateX(4px) rotate(10deg); }
+.fancy-btn:hover .label { transform: translateX(6px); }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Platforma Testimi - Matura 2024</h1>
+    <select id="subjectSelect">
+      <option value="0" disabled selected hidden>Zgjedhë lëndën</option>
+    <!--  <option value="shqip">Gjuhë Shqipe dhe Letërsi</option>
+      <option value="ang">Gjuhë Angleze</option>
+      <option value="mat-n">Matematikë - Natyror</option>
+      <option value="mat-sh">Matematikë - Shoqëror</option>
+      <option value="fizikë">Fizikë</option>
+      <option value="kimi">Kimi</option>
+      <option value="biologji">Biologji</option> -->
+      <option value="informatikë">Informatikë</option>
+      <!--  <option value="gjeografi">Gjeografi</option>
+      <option value="histori">Histori</option>
+      <option value="sociologji">Sociologji</option>
+      <option value="psikologji">Psikologji</option>
+      <option value="ekonomi">Ekonomi dhe Ndërmarrësi</option>
+      <option value="edqytetare">Edukatë Qytetare</option>
+      <option value="his-art">Histori e Artit</option>
+      <option value="muz-har">Teori e Muzikës dhe Harmoni</option> -->
+    </select>
+    <!-- Mesazhi që shfaqet kur nuk gjenden pyetje për lëndën e zgjedhur -->
+    <div id="noResults" style="display: none; color: red; font-weight: bold; text-align: center;">
+      Së shpejti do të publikohen pyetjet për këtë lëndë.
+    </div>    
+  </div>  
+
+    <form id="quizForm">
+      <div id="questionsContainer">
+        <!-- PYETJET NGA LËNDA "INFORMATIKË" -->
+<!-- Pyetja 76 -->
+<div class="question" data-subject="informatikë" id="i76">
+  <p>
+    <strong>76. Për ruajtjen e përhershme të të dhënave, aplikacionet dhe Sistemit Operativ përdoret memoria:</strong>
+  </p>
+  <img src="./assets/24Informatikë76.jpg" style="max-width:50%; height:auto; margin-bottom:10px;">
+  <div class="options">
+    <label><input type="radio" name="i76" value="A"> A) Graphics Processing Unit (GPU)</label>
+    <label><input type="radio" name="i76" value="B"> B) Central Processing Unit (CPU)</label>
+    <label><input type="radio" name="i76" value="C"> C) Random Access Memory (RAM)</label>
+    <label><input type="radio" name="i76" value="D"> D) Hard Disk Drive (HDD)</label>
+  </div>
+</div>
+
+<!-- Pyetja 77 -->
+<div class="question" data-subject="informatikë" id="i77">
+  <p>
+    <strong>77. Profesoresha e informatikës gjatë orës mësimore tregon se ndërtimi i sinjalit të monitorit dhe paraqitja e pamjes së fotografisë në ekran mundësohet nga komponenta harduerike e kompjuterit. Për cilën komponentë bëhet fjalë ketu:</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i77" value="A"> A) Hard Diskun</label>
+    <label><input type="radio" name="i77" value="B"> B) Kartelën grafike</label>
+    <label><input type="radio" name="i77" value="C"> C) Memorien ROM</label>
+    <label><input type="radio" name="i77" value="D"> D) Printerin</label>
+  </div>
+</div>
+
+<!-- Pyetja 78 -->
+<div class="question" data-subject="informatikë" id="i78">
+  <p>
+    <strong>78. Aplikacioni që përdoret për përshtatjen e shumicës së parametrave të kompjuterit në sistemin operativ Windows është:</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i78" value="A"> A) File Explorer</label>
+    <label><input type="radio" name="i78" value="B"> B) Internet Explorer</label>
+    <label><input type="radio" name="i78" value="C"> C) Control Panel</label>
+    <label><input type="radio" name="i78" value="D"> D) Read Only</label>
+  </div>
+</div>
+
+<!-- Pyetja 79 -->
+<div class="question" data-subject="informatikë" id="i79">
+  <p>
+    <strong>79. Nëse shkolla juaj është e lidhur në një rrjet prej një grupi të kompjuterëve (homegroup) dhe posedon vetëm një shtypës (printer). Si është e mundur që edhe klasa ta përdorin bashkë këtë shtypës. Konfigurimi në Windows bëhet duke zgjedhur:</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i79" value="A"> A) Lock printer</label>
+    <label><input type="radio" name="i79" value="B"> B) Shortcut printer</label>
+    <label><input type="radio" name="i79" value="C"> C) Hibernate printer</label>
+    <label><input type="radio" name="i79" value="D"> D) Share printer</label>
+  </div>
+</div>
+
+<!-- Pyetja 80 -->
+<div class="question" data-subject="informatikë" id="i80">
+  <p>
+    <strong>80. Dy shokë që ndodhen në largësi prej rreth 120 metra duan të lidhin kompjuterët e tyre me UTP kabllo ashtu që të mund të transferojnë fajlla nga njëri te tjetri. Sinjali është i paqëndrueshëm dhe ndonjëherë humb. Cilin paisje duhet ta përdorin për ta përforcuar sinjalin e transmetimit:</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i80" value="A"> A) Repeater</label>
+    <label><input type="radio" name="i80" value="B"> B) NIC</label>
+    <label><input type="radio" name="i80" value="C"> C) VGA</label>
+    <label><input type="radio" name="i80" value="D"> D) Router</label>
+  </div>
+</div>
+
+<!-- Pyetja 81 -->
+<div class="question" data-subject="informatikë" id="i81">
+  <p>
+    <strong>81. Cila prej këtyre veprimeve ndihmon për të mbrojtur të dhënat personale në internet:</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i81" value="A"> A) Hapni të gjitha linket që merrni në email</label>
+    <label><input type="radio" name="i81" value="B"> B) Përdorimi i një VPN për lidhje të sigurt në internet</label>
+    <label><input type="radio" name="i81" value="C"> C) Ndajeni fjalëkalimet tuaja me të tjerët</label>
+    <label><input type="radio" name="i81" value="D"> D) Përdorimi i të njëjtit fjalëkalim për të gjitha llogaritë</label>
+  </div>
+</div>
+
+<!-- Pyetja 82 -->
+<div class="question" data-subject="informatikë" id="i82">
+  <p>
+    <strong>82. Cila nga figurat e mëposhtme tregon komandën e duhur Freeze Panes në Excel, e cila lejon që kolona e parë e tabelës ose e fletës punuese të mbetet e dukshme edhe kur shfletohen të dhënat në kolona të tjera të djathta:</strong>
+  </p>
+  <img src="./assets/24Informatik82.png" style="max-width:60%; height:auto; margin-bottom:10px;">
+  <div class="options">
+    <label><input type="radio" name="i82" value="A"> a)</label>
+    <label><input type="radio" name="i82" value="B"> b)</label>
+    <label><input type="radio" name="i82" value="C"> c)</label>
+    <label><input type="radio" name="i82" value="D"> d)</label>
+  </div>
+</div>
+
+<!-- Pyetja 83 -->
+<div class="question" data-subject="informatikë" id="i83">
+  <p>
+    <strong>83. Pas ekzekutimit të funksionit =EVEN(11) rezultati në Excel do të jetë:</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i83" value="A"> A) 2</label>
+    <label><input type="radio" name="i83" value="B"> B) 10</label>
+    <label><input type="radio" name="i83" value="C"> C) 11</label>
+    <label><input type="radio" name="i83" value="D"> D) 12</label>
+  </div>
+</div>
+
+<!-- Pyetja 84 -->
+<div class="question" data-subject="informatikë" id="i84">
+  <p>
+    <strong>84. Në tabelën e paraqitur si më poshtë, pas ekzekutimit të funksionit në Excel =ROUND(B1/C1,1), rezultati do të jetë:</strong>
+  </p>
+  <img src="./assets/24Informatik84.png" style="max-width:60%; height:auto; margin-bottom:10px;">
+  <div class="options">
+    <label><input type="radio" name="i84" value="A"> A) 0.3</label>
+    <label><input type="radio" name="i84" value="B"> B) 0.5</label>
+    <label><input type="radio" name="i84" value="C"> C) 0.7</label>
+    <label><input type="radio" name="i84" value="D"> D) 0.9</label>
+  </div>
+</div>
+
+<!-- Pyetja 85 -->
+<div class="question" data-subject="informatikë" id="i85">
+  <p>
+    <strong>85. Drejtori i shkollës ka nevojë të llogarisë përvojën e punës së mësimdhënësve. Sa vite përvojë pune ka mësimdhënësja pas ekzekutimit të funksionit =DATEDIF(C3,D3,"Y") në Excel, sipas të dhënave të paraqitura në tabelën e mëposhtme:</strong>
+  </p>
+  <img src="./assets/24Informatik85.png" style="max-width:60%; height:auto; margin-bottom:10px;">
+  <div class="options">
+    <label><input type="radio" name="i85" value="A"> A) 7</label>
+    <label><input type="radio" name="i85" value="B"> B) 14</label>
+    <label><input type="radio" name="i85" value="C"> C) 21</label>
+    <label><input type="radio" name="i85" value="D"> D) 17</label>
+  </div>
+</div>
+
+<!-- Pyetja 86 -->
+<div class="question" data-subject="informatikë" id="i86">
+  <p>
+    <strong>86. Nëse qeliza M10 në Excel përmban formulën =$A$5*H$10, çfarë lloji i referencës së qelizës është H$10 në formulë?</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i86" value="A"> A) Referencë relative</label>
+    <label><input type="radio" name="i86" value="B"> B) Referencë e përzier</label>
+    <label><input type="radio" name="i86" value="C"> C) Referencë qarkore</label>
+    <label><input type="radio" name="i86" value="D"> D) Referencë absolute</label>
+  </div>
+</div>
+
+<!-- Pyetja 87 -->
+<div class="question" data-subject="informatikë" id="i87">
+  <p>
+    <strong>87. Pas ekzekutimit të funksionit =LEFT("emri@kompania.com",4) rezultati në Excel do të jetë:</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i87" value="A"> A) kompania</label>
+    <label><input type="radio" name="i87" value="B"> B) emri@kompania</label>
+    <label><input type="radio" name="i87" value="C"> C) com</label>
+    <label><input type="radio" name="i87" value="D"> D) emri</label>
+  </div>
+</div>
+
+<!-- Pyetja 88 -->
+<div class="question" data-subject="informatikë" id="i88">
+  <p>
+    <strong>88. Albani dëshiron t’i llogarit shumën e golave që ka shënuar “Messi”. Funksioni që duhet të ekzekutoj ai në Excel, sipas të dhënave të tabelës është:</strong>
+  </p>
+  <img src="./assets/24Informatik88.png" style="max-width:60%; height:auto; margin-bottom:10px;">
+  <div class="options">
+    <label><input type="radio" name="i88" value="A"> A) =SUMIF(A2:A10,"=Messi",B2:B10)</label>
+    <label><input type="radio" name="i88" value="B"> B) =AVERAGEIF(A2:A10,"=Messi",B2:B10)</label>
+    <label><input type="radio" name="i88" value="C"> C) =IF(A2:A10,"=Messi",B2:B10)</label>
+    <label><input type="radio" name="i88" value="D"> D) =COUNTIF(A2:A10,"=Messi",B2:B10)</label>
+  </div>
+</div>
+
+<!-- Pyetja 89 -->
+<div class="question" data-subject="informatikë" id="i89">
+  <p>
+    <strong>89. Koleksioni i integruar i rekordeve të lidhura në mënyrë logjike në formën e tabelave, që ofrojnë një mekanizëm të organizuar për ruajtjen, administrimin dhe marrjen e informacionit quhet:</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i89" value="A"> A) Baza e piramidës</label>
+    <label><input type="radio" name="i89" value="B"> B) Baza e të dhënave</label>
+    <label><input type="radio" name="i89" value="C"> C) Baza e sigurisë</label>
+    <label><input type="radio" name="i89" value="D"> D) Baza e fonteve</label>
+  </div>
+</div>
+
+<!-- Pyetja 90 -->
+<div class="question" data-subject="informatikë" id="i90">
+  <p>
+    <strong>90. Tabelat në bazën e të dhënave në Access ndërlidhen në mes veti, me anë të disa llojeve të relacioneve. Relacioni një me shumë (1 – ∞) do të thotë:</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i90" value="A"> A) Një element mund të shfaqet vetëm në një instancë (tabelë) tjetër</label>
+    <label><input type="radio" name="i90" value="B"> B) Shumë elemente mund të shfaqen vetëm në një instancë (tabelë) tjetër</label>
+    <label><input type="radio" name="i90" value="C"> C) Një element mund të shfaqet në shumë instanca (tabela) tjera</label>
+    <label><input type="radio" name="i90" value="D"> D) Shumë elemente mund të shfaqen në shumë instanca (tabela) tjera</label>
+  </div>
+</div>
+
+<!-- Pyetja 91 -->
+<div class="question" data-subject="informatikë" id="i91">
+  <p>
+    <strong>91. Në bazën e të dhënave në Access të një qendre të kurseve është duke u formuar tabela në të cilën do t’i shkruhen emrat e kurseve që ofrohen dhe të dhënat e tjera. Cili tip i të dhënave është më i përshtatshëm për fushën Çmimi?</strong>
+  </p>
+  <img src="./assets/24Informatik91.png" style="max-width:60%; height:auto; margin-bottom:10px;">
+  <div class="options">
+    <label><input type="radio" name="i91" value="A"> A) Currency</label>
+    <label><input type="radio" name="i91" value="B"> B) Large Number</label>
+    <label><input type="radio" name="i91" value="C"> C) Short Text</label>
+    <label><input type="radio" name="i91" value="D"> D) Date/Time</label>
+  </div>
+</div>
+
+<!-- Pyetja 92 -->
+<div class="question" data-subject="informatikë" id="i92">
+  <p>
+    <strong>92. Pas ekzekutimit të pyetësit me kriterin në fushën Komuna të tabelës Klientët, si në figurën e mëposhtme të tabelave Klientët dhe Shitjet, rezultati në bazën e të dhënave në Access do të jetë:</strong>
+  </p>
+  <img src="./assets/24Informatik92.png" style="max-width:60%; height:auto; margin-bottom:10px;">
+  <div class="options">
+    <label><input type="radio" name="i92" value="A"> A) Paraqet çmimet e librave të shitur në Prizren</label>
+    <label><input type="radio" name="i92" value="B"> B) Paraqet emrat e klientëve nga Prizreni</label>
+    <label><input type="radio" name="i92" value="C"> C) Paraqet sasinë totale të librave të shitura në Prizren</label>
+    <label><input type="radio" name="i92" value="D"> D) Paraqet numrin e klientëve nga Prizreni</label>
+  </div>
+</div>
+
+<!-- Pyetja 93 -->
+<div class="question" data-subject="informatikë" id="i93">
+  <p>
+    <strong>93. Fëllënza në bazën e të dhënave në Access, kishte krijuar një tabelë me emrat, adresat, numrat e telefonit dhe moshën të 50 klientëve. Sa fushë ka gjethsej ajo:</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i93" value="A"> A) 1</label>
+    <label><input type="radio" name="i93" value="B"> B) 4</label>
+    <label><input type="radio" name="i93" value="C"> C) 50</label>
+    <label><input type="radio" name="i93" value="D"> D) 255</label>
+  </div>
+</div>
+
+<!-- Pyetja 94 -->
+<div class="question" data-subject="informatikë" id="i94">
+  <p>
+    <strong>94. Cilat nga pohimet e mëposhtme nuk janë të sakta për PowerPoint:<br>
+    I. PowerPoint organizon punën me slajde<br>
+    II. PowerPoint është program për shfletim në internet (Browser)<br>
+    III. PowerPoint është program për përzatimin e informatave para audiencës<br>
+    IV. PowerPoint është pjesë harduerike e kompjuterit</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i94" value="A"> A) (I) dhe (III)</label>
+    <label><input type="radio" name="i94" value="B"> B) (I) dhe (IV)</label>
+    <label><input type="radio" name="i94" value="C"> C) (II) dhe (IV)</label>
+    <label><input type="radio" name="i94" value="D"> D) (III) dhe (IV)</label>
+  </div>
+</div>
+
+<!-- Pyetja 95 -->
+<div class="question" data-subject="informatikë" id="i95">
+  <p>
+    <strong>95. Profesoresha e informatikës gjatë krijimit të prezantimit dëshiron që logoja e shkollës të trashëgohet në të gjitha sllajdet. Cila pamje e mundëson këtë në PowerPoint:</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i95" value="A"> A) Slide Show</label>
+    <label><input type="radio" name="i95" value="B"> B) Slide Sorter</label>
+    <label><input type="radio" name="i95" value="C"> C) Notes Page</label>
+    <label><input type="radio" name="i95" value="D"> D) Slide Master</label>
+  </div>
+</div>
+
+<!-- Pyetja 96 -->
+<div class="question" data-subject="informatikë" id="i96">
+  <p>
+    <strong>96. Çfarë përfaqësojnë ikonat e mëposhtme në PowerPoint:</strong>
+  </p>
+  <img src="./assets/24Informatik96.png" style="max-width:60%; height:auto; margin-bottom:10px;">
+  <div class="options">
+    <label><input type="radio" name="i96" value="A"> A) Animacionin e tekstit</label>
+    <label><input type="radio" name="i96" value="B"> B) Tranzicionin e sllajdeve</label>
+    <label><input type="radio" name="i96" value="C"> C) Ngjyrën e temave</label>
+    <label><input type="radio" name="i96" value="D"> D) Fontin e shkronjave</label>
+  </div>
+</div>
+
+<!-- Pyetja 97 -->
+<div class="question" data-subject="informatikë" id="i97">
+  <p>
+    <strong>97. Në diagramin me shtylla të grumbulluara, të prezantuar në PowerPoint janë paraqitur pikët e testit të nxënësve në lëndën e matematikës. Analizoni diagramin e mëposhtëm dhe tregoni se kush ka arritur më së shumti pikë në testin e dytë në këtë lëndë:</strong>
+  </p>
+  <img src="./assets/24Informatik97.png" style="max-width:60%; height:auto; margin-bottom:10px;">
+  <div class="options">
+    <label><input type="radio" name="i97" value="A"> A) Petriti</label>
+    <label><input type="radio" name="i97" value="B"> B) Arta</label>
+    <label><input type="radio" name="i97" value="C"> C) Fatoni</label>
+    <label><input type="radio" name="i97" value="D"> D) Linda</label>
+  </div>
+</div>
+
+<!-- Pyetja 98 -->
+<div class="question" data-subject="informatikë" id="i98">
+  <p>
+    <strong>98. Një nxënëse për të shfletuar në Internet po përdor njëri prej ueb shfletuesve. Cili nga programet e mëposhtëm është një web shfletues (browser):</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i98" value="A"> A) Word</label>
+    <label><input type="radio" name="i98" value="B"> B) Excel</label>
+    <label><input type="radio" name="i98" value="C"> C) Chrome</label>
+    <label><input type="radio" name="i98" value="D"> D) PowerPoint</label>
+  </div>
+</div>
+
+<!-- Pyetja 99 -->
+<div class="question" data-subject="informatikë" id="i99">
+  <p>
+    <strong>99. Njësia për matjen e shpejtësisë së Internetit është:</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i99" value="A"> A) Mbps</label>
+    <label><input type="radio" name="i99" value="B"> B) km/h</label>
+    <label><input type="radio" name="i99" value="C"> C) bs</label>
+    <label><input type="radio" name="i99" value="D"> D) m/s</label>
+  </div>
+</div>
+
+<!-- Pyetja 100 -->
+<div class="question" data-subject="informatikë" id="i100">
+  <p>
+    <strong>100. Cila prej këtyre formateve më shpesh përdoret për një audio fajllë në internet:</strong>
+  </p>
+  <div class="options">
+    <label><input type="radio" name="i100" value="A"> A) MP4</label>
+    <label><input type="radio" name="i100" value="B"> B) WAV</label>
+    <label><input type="radio" name="i100" value="C"> C) JPG</label>
+    <label><input type="radio" name="i100" value="D"> D) PDF</label>
+  </div>
+</div>
+
+        
+      <button type="button" id="submitBtn">Dërgo Testin</button>
+    </form>
+
+    <div id="result"></div>
+  </div>
+  
+  <script>
+    // Fsheh të gjitha pyetjet që nga fillimi
+    document.querySelectorAll('.question, .question-helper').forEach(q => {
+      q.style.display = 'none';
+    });
+    // Filtrimi i pyetjeve sipas lëndës së zgjedhur
+    document.getElementById('subjectSelect').addEventListener('change', function() {
+      const selectedSubject = this.value;
+      const questions = document.querySelectorAll('.question, .question-helper');
+      let visibleCount = 0;
+      
+      // Filtrimi i pyetjeve
+      questions.forEach(q => {
+        if (selectedSubject === 'all' || q.getAttribute('data-subject') === selectedSubject) {
+          q.style.display = 'block';
+          visibleCount++;
+        } else {
+          q.style.display = 'none';
+        }
+      });
+      
+      // Kontrollo nëse ka pyetje të dukshme
+      const noResultsMessage = document.getElementById('noResults');
+      if (visibleCount === 0) {
+        noResultsMessage.style.display = 'block';
+      } else {
+        noResultsMessage.style.display = 'none';
+      }
+    });
+    
+    // Objekt me përgjigjet e sakta sipas ID-ve të pyetjeve
+    const answers = {
+      i76: "D",
+      i77: "B",
+      i78: "C",
+      i79: "D",
+      i80: "A",
+      i81: "B",
+      i82: "A",
+      i83: "D",
+      i84: "C",
+      i85: "D",
+      i86: "B",
+      i87: "D",
+      i88: "A",
+      i89: "B",
+      i90: "C",
+      i91: "A",
+      i92: "C",
+      i93: "B",
+      i94: "C",
+      i95: "D",
+      i96: "A",
+      i97: "D",
+      i98: "C",
+      i99: "A",
+      i100: "B",
+      // Shtoni këtu përgjigjet për të gjitha pyetjet nga dokumenti.
+    };
+    
+    document.getElementById('submitBtn').addEventListener('click', function() {
+      let total = 0;
+      let correctCount = 0;
+      const questionEls = document.querySelectorAll('.question');
+      
+      questionEls.forEach(question => {
+        if (question.style.display === 'none') return;
+        total++;
+        const qId = question.id;
+        const selected = question.querySelector('input[name="'+qId+'"]:checked');
+        if (!selected) return;
+        const correctAnswer = answers[qId];
+        if (selected.value === correctAnswer) {
+          correctCount++;
+          question.classList.add('correct');
+        } else {
+          question.classList.add('wrong');
+          const correctOption = question.querySelector('input[value="'+correctAnswer+'"]');
+          if (correctOption) {
+            const correctLabel = correctOption.parentElement;
+            correctLabel.innerHTML = correctLabel.innerHTML.replace(correctAnswer + '.', '<span class="highlight-correct">' + correctAnswer + '.</span>');
+          }
+          const wrongLabel = selected.parentElement;
+          wrongLabel.innerHTML = wrongLabel.innerHTML.replace(selected.value + '.', '<span class="highlight-wrong">' + selected.value + '.</span>');
+        }
+        const inputs = question.querySelectorAll('input[type="radio"]');
+        inputs.forEach(input => input.disabled = true);
+      });
+      
+      const resultEl = document.getElementById('result');
+      resultEl.style.display = 'block';
+      resultEl.innerHTML = `Rezultati: ${correctCount} nga ${total} pyetje të sakta.`;
+      if (correctCount === total) {
+        resultEl.innerHTML += ' Urime, ju keni përgjigjur saktë të gjitha pyetjeve!';
+      } else if (correctCount / total >= 0.5) {
+        resultEl.innerHTML += ' Keni kaluar testin.';
+      } else {
+        resultEl.innerHTML += ' Duhet të provoni përsëri për një rezultat më të mirë.';
+      }
+    });
+    // Gjej butonët dhe modal-in
+    const openBtn  = document.getElementById('open-report');
+    const closeBtn = document.getElementById('close-report');
+    const modal    = document.getElementById('report-modal');
+
+    // Hap modal-in
+    openBtn.addEventListener('click', () => {
+     modal.style.display = 'flex';
+    });
+
+    // Mbyll modal-in
+    closeBtn.addEventListener('click', () => {
+     modal.style.display = 'none';
+    });
+    // Mbyll edhe me klik jashtë dritares
+    modal.addEventListener('click', e => {
+     if (e.target === modal) modal.style.display = 'none';
+    });
+
+  </script>
+</body>
+<footer style="background:var(--bg-color); padding:15px 0; position:0; bottom:0; left:0; width:100%;">
+  <div style="display:flex; justify-content:center; align-items:center; gap:15px; flex-wrap:wrap;">
+    <button type="button" id="openReportBtn" class="fancy-btn">
+      <span class="fancy-bg"></span>
+      <div class="icon-wrap">
+        <!-- SVG nga material.io -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <g><rect fill="none" height="24" width="24"/></g>
+          <g><g>
+            <path d="M22,20.59l-4.69-4.69C18.37,14.55,19,12.85,19,11c0-4.42-3.58-8-8-8-4.08,0-7.44,3.05-7.93,7h2.02C5.57,7.17,8.03,5,11,5c3.31,0,6,2.69,6,6s-2.69,6-6,6c-2.42,0-4.5-1.44-5.45-3.5H3.4C4.45,16.69,7.46,19,11,19c1.85,0,3.55-0.63,4.9-1.69L20.59,22L22,20.59z"/>
+            <polygon points="8.43,9.69 9.65,15 11.29,15 12.55,11.22 13.5,13.5 15.5,13.5 15.5,12 14.5,12 13.25,9 11.71,9 10.59,12.37 9.35,7 7.7,7 6.45,11 1,11 1,12.5 7.55,12.5"/>
+          </g></g>
+        </svg>
+      </div>
+      <span class="label">Raporto gabimet</span>
+    </button>
+  </div>
+</footer>
+
+<div id="reportModal" class="modal-overlay">
+  <div class="modal">
+    <h2>Raporto Gabimin</h2>
+    <form
+  id="reportForm"
+  action="https://formspree.io/f/xanoyygr"
+  method="POST"
+>
+  <!-- e‑maili i përdoruesit -->
+  <label>
+    Email juaj:
+    <input type="email" name="Email" required placeholder="shembull@domain.com"/>
+  </label>
+
+  <!-- fusha tjera -->
+  <label>
+    Lënda / Tema:
+    <input type="text" name="Lenda" required placeholder="P.sh. Matematike"/>
+  </label>
+  <label>
+    Pyetja (#):
+    <input type="number" name="Pyetja" min="1" required/>
+  </label>
+  <label>
+    Lloji i gabimit:
+    <select name="TipiGabimit" required>
+      <option value="">— Zgjidh —</option>
+      <option value="Shenim">Shënim</option>
+      <option value="Numerim">Numërim</option>
+      <option value="Tekst">Tekst</option>
+      <option value="Tjeter">Tjetër</option>
+    </select>
+  </label>
+  <label>
+    Komenti:
+    <textarea name="Koment" rows="4" placeholder="Përshkrimi…"></textarea>
+  </label>
+
+  <!-- opsionale: e‑maili yt në subject -->
+  <input type="hidden" name="_subject" value="Raport Gabimi nga Platforma Testimi">
+
+  <!-- butonat -->
+  <div class="buttons">
+    <button type="submit" class="btn-submit">Dërgo</button>
+    <button type="button" id="closeReportBtn" class="btn-cancel">Anulo</button>
+  </div>
+</form>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Filtrimi pyetjesh
+    const subjectSelect = document.getElementById('subjectSelect');
+    const questions = document.querySelectorAll('.question, .question-helper');
+    subjectSelect.addEventListener('change', function() {
+      let visible = 0;
+      questions.forEach(q => {
+        if (q.dataset.subject === this.value) {
+          q.style.display = 'block'; visible++;
+        } else q.style.display = 'none';
+      });
+      document.getElementById('noResults').style.display = visible ? 'none':'block';
+    });
+    // Modal raporte
+    const openBtn = document.getElementById('openReportBtn');
+    const closeBtn = document.getElementById('closeReportBtn');
+    const modal = document.getElementById('reportModal');
+    openBtn.addEventListener('click', ()=> modal.style.display='flex');
+    closeBtn.addEventListener('click', ()=> modal.style.display='none');
+    modal.addEventListener('click', e=> { if (e.target===modal) modal.style.display='none'; });
+  });
+</script>
+</body>
+</html>
